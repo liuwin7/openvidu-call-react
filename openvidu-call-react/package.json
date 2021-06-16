@@ -12,6 +12,7 @@
         "jquery": "3.5.0",
         "notistack": "^1.0.9",
         "openvidu-browser": "2.18.0",
+        "qs": "^6.5.2",
         "react": "16.13.1",
         "react-dom": "16.13.1",
         "react-router-dom": "^5.2.0",
