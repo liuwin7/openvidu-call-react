@@ -4,6 +4,7 @@ import OutgoingComponent from "./call/OutgoingComponent";
 import IncomingComponent from "./call/IncomingComponent";
 import VideoRoomComponent from "./VideoRoomComponent";
 import React, {useEffect, useState} from "react";
+import { v4 as uuidV4 } from 'uuid';
 
 const useStyles = makeStyles(theme => ({
     fab: {
@@ -13,29 +14,109 @@ const useStyles = makeStyles(theme => ({
     }
 }));
 
-const ReadyStatusIdle = 0; // 空闲
-const ReadyStatusRegistration = 1; // 注册用户
-const ReadyStatusRegistrationSuccess = 2; // 注册成功
-const ReadyStatusRegistrationFailed = 3; // 注册失败
+/**
+ * 电话类型
+ * */
+class CallDirection {
+    static Outgoing = 'outgoing';
+    static Incoming = 'incoming';
+}
 
-const CallComponent = ({userId, userName, onReadyStatusChange}) => {
+/**
+ * 电话状态
+ * */
+class CallStatus {
+    static Idle = 'idle';
+    static Waiting = 'waiting';
+    static Connected = 'connected';
+    static Disconnected = 'disconnected';
+}
+
+/**
+ * Call 用于记录当前通话的相关内容
+ * */
+class Call {
+    constructor(direction, callId, originUserId, originUserName, peerUserId, peerUserName) {
+        this.direction = direction;
+        this.callId = callId;
+        this.originUserId = originUserId;
+        this.originUserName = originUserName;
+        this.peerUserId = peerUserId;
+        this.peerUserName = peerUserName;
+        this.status = CallStatus.Idle;
+    }
+}
+
+/**
+ * OutgoingCall 拨出电话
+ * */
+class OutgoingCall extends Call {
+    constructor(originUserId, originUserName, peerUserId, peerUserName) {
+        super(
+            CallDirection.Outgoing, uuidV4(),
+            originUserId, originUserName, peerUserId, peerUserName
+        );
+    }
+}
+
+/**
+ * IncomingCall 拨入电话
+ * */
+class IncomingCall extends Call {
+    constructor(originUserId, originUserName, peerUserId, peerUserName) {
+        super(
+            CallDirection.Incoming, uuidV4(),
+            originUserId, originUserName, peerUserId, peerUserName
+        );
+    }
+}
+
+/**
+ * 客户端和服务器的交互命令
+ *
+ * @param Registration 注册
+ * @param Invite 请求通话
+ * @param Connect 对方接听后，下发的连接命令
+ * @param Disconnect 通话双方中的任意一方挂断电话后，服务器发出的断开命令
+ * */
+class Commands {
+    static Registration = 'registration';
+    static Invite = 'invite';
+    static Connect = 'connect';
+    static Disconnect = 'disconnect';
+}
+
+/**
+ * 不同命令下不同的动作
+ * */
+class Actions {
+    static Ring = 'ring';
+    static Cancel = 'cancel';
+    static Busy = 'busy';
+    static Reject = 'reject';
+    static Answer = 'answer';
+    static Handoff = 'handoff';
+}
+
+const CallComponent = ({userId, userName, peerUserId, peerUserName}) => {
 
     const classes = useStyles();
-    let readyStatusChange = ReadyStatusIdle; // 空闲
     const [outgoing, setOutgoing] = useState(false);
     const [incoming, setIncoming] = useState(false);
     const [socket, setSocket] = useState();
     const [session, setSession] = useState();
+    const [currentCall, setCurrentCall] = useState(); //
 
     const handleOutgoing = () => {
         setOutgoing(true);
+        const call = {
+            peerUserName, peerUserId,
+            fromUserName: userName, fromUserId: userId,
+        };
         const data = {
-            type: 'outgoing',
-            action: 'ring',
-            to: peerUser,
-            toUserId: peerUserId,
-            origin: originUser,
-            originUserId: mineId,
+            type: Commands.Invite,
+            action: Actions.Ring,
+            ...call,
         };
         socket.send(JSON.stringify(data));
     };
@@ -43,12 +124,11 @@ const CallComponent = ({userId, userName, onReadyStatusChange}) => {
     const handleCallCancel = () => {
         setOutgoing(false);
         const data = {
-            type: 'outgoing',
-            action: 'cancel',
-            to: peerUser,
-            toUserId: peerUserId,
-            origin: originUser,
-            originUserId: mineId,
+            type: Commands.Outgoing,
+            action: Actions.Cancel,
+            peerUserName, peerUserId,
+            fromUserName: userName,
+            fromUserId: userId,
         };
         socket.send(JSON.stringify(data));
         // enqueueSnackbar('Cancel', {variant: 'warning', preventDuplicate: true});
@@ -57,8 +137,8 @@ const CallComponent = ({userId, userName, onReadyStatusChange}) => {
     const handleReject = () => {
         setIncoming(false);
         const data = {
-            type: 'incoming',
-            action: 'reject',
+            type: Commands.Incoming,
+            action: Actions.Reject,
             originUserId: peerUserId,
         };
         socket.send(JSON.stringify(data));
@@ -68,8 +148,8 @@ const CallComponent = ({userId, userName, onReadyStatusChange}) => {
     const handleAnswer = () => {
         setIncoming(false);
         const data = {
-            type: 'incoming',
-            action: 'answer',
+            type: Commands.Incoming,
+            action: Actions.Answer,
             originUserId: peerUserId,
         };
         socket.send(JSON.stringify(data));
@@ -79,8 +159,8 @@ const CallComponent = ({userId, userName, onReadyStatusChange}) => {
     const handleLeaveSession = () => {
         setSession(undefined);
         const data = {
-            type: 'incoming',
-            action: 'handoff',
+            type: Commands.Incoming,
+            action: Actions.Handoff,
             peerUserId,
         };
         socket.send(JSON.stringify(data));
@@ -91,8 +171,8 @@ const CallComponent = ({userId, userName, onReadyStatusChange}) => {
         console.log('WebSocket Open', ev);
         // registration or bind the user and the websocket
         const data = {
-            type: 'registration',
-            userId: mineId,
+            type: Commands.Registration,
+            userId,
         }
         this.send(JSON.stringify(data));
     };
@@ -109,20 +189,27 @@ const CallComponent = ({userId, userName, onReadyStatusChange}) => {
         console.log('message', ev.data);
         const messageData = JSON.parse(ev.data);
         const {type} = messageData;
-        if (type === 'incoming') {
+        if (type === Commands.Invite) {
+            if (currentCall) {
+                // TODO - Tell the server, I'm busy.
+                socket.send(JSON.stringify({
+
+                }));
+                return;
+            }
             const {action} = messageData;
-            if (action === 'ring') {
+            if (action === Actions.Ring) {
                 setIncoming(true);
-            } else if (action === 'cancel') {
+            } else if (action === Actions.Cancel) {
                 setIncoming(false);
                 // enqueueSnackbar('Cancel', {variant: 'warning', preventDuplicate: true});
             }
-        } else if (type === 'connect') {
+        } else if (type === Commands.Connect) {
             setOutgoing(false);
             const {session} = messageData;
             setSession(session);
             // enqueueSnackbar('Connected', {variant: 'success', preventDuplicate: true});
-        } else if (type === 'disconnect') {
+        } else if (type === Commands.Disconnect) {
             setSession(undefined);
             // enqueueSnackbar('Disconnected', {variant: 'info', preventDuplicate: true});
         }
@@ -163,7 +250,7 @@ const CallComponent = ({userId, userName, onReadyStatusChange}) => {
                 session && <VideoRoomComponent
                     openviduServerUrl="https://192.168.8.181:4443"
                     sessionName={session}
-                    user={originUser}
+                    user={userName}
                     leaveSession={handleLeaveSession}
                     // joinSession={() => {
                     //     setIncoming(false);
