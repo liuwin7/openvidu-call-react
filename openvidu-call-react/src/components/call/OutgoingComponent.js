@@ -9,6 +9,7 @@ import {
     Typography,
 } from "@material-ui/core";
 import {CallEnd} from '@material-ui/icons';
+import {CallDirection, CallStatus} from "../CallComponent";
 
 const useStyles = makeStyles(theme => ({
     appBar: {
@@ -32,11 +33,15 @@ const Transition = React.forwardRef((props, ref) => (
     <Slide direction="up" ref={ref} {...props} />
 ));
 
-const OutgoingComponent = ({callType = 'Video', open, handleCancel}) => {
+const OutgoingComponent = ({currentCall, handleCancel}) => {
     const classes = useStyles();
+    const dialogOpen = !!currentCall
+        && currentCall.direction === CallDirection.Outgoing
+        && currentCall.status !== CallStatus.Connected;
     return (
         <div>
-            <Dialog open={open} fullScreen TransitionComponent={Transition}>
+            <Dialog open={dialogOpen}
+                    fullScreen TransitionComponent={Transition}>
                 <AppBar className={classes.appBar}>
                     <Toolbar>
                         <Typography variant="h6" className={classes.title}>
@@ -46,7 +51,7 @@ const OutgoingComponent = ({callType = 'Video', open, handleCancel}) => {
                 </AppBar>
                 <div className={classes.content}>
                     <Typography variant="h6">
-                        {callType} To 张三
+                        呼叫 { currentCall ? currentCall.peerUserName : '' }
                     </Typography>
                     <IconButton color="secondary" aria-label="hand off"
                                 className={classes.handle_off} onClick={handleCancel}>

@@ -1,166 +1,114 @@
 import React, {useEffect, useState} from "react";
-import {Fab, makeStyles} from "@material-ui/core";
-import {Phone} from "@material-ui/icons";
-import OutgoingComponent from "./components/call/OutgoingComponent";
-import IncomingComponent from "./components/call/IncomingComponent";
-import VideoRoomComponent from "./components/VideoRoomComponent";
-import { useLocation } from 'react-router-dom';
-import {parse} from 'qs';
+import {Avatar, List, ListItem, ListItemAvatar, ListItemText, makeStyles, TextField} from "@material-ui/core";
+import {AccountCircle} from "@material-ui/icons";
 import {useSnackbar} from "notistack";
+import CallComponent from "./components/CallComponent";
+import {useForm} from "react-hook-form";
+import axios from "axios";
 
 const useStyles = makeStyles(theme => ({
     fab: {
         position: "absolute",
         right: theme.spacing(2),
         bottom: theme.spacing(2),
-    }
+    },
+    root: {
+        '& > *': {
+            margin: theme.spacing(1),
+            width: '25ch',
+        },
+    },
+    list: {
+        width: '100%',
+        backgroundColor: theme.palette.background.paper,
+    },
+    error: {
+        color: "red",
+    },
 }));
 
 const App = () => {
     const classes = useStyles();
-    const location = useLocation();
+    const {
+        register, handleSubmit, formState: {errors},
+    } = useForm();
     const { enqueueSnackbar } = useSnackbar();
 
-    let mineId = '001', originUser = '张三', peerUserId = '002', peerUser = '李四';
-    if (location.search.length !== 0) {
-        const searchStr = location.search.slice(1);
-        const {userId, toUserId, to, origin} = parse(searchStr);
-        mineId = userId;
-        peerUserId = toUserId;
-        originUser = origin;
-        peerUser = to;
-    }
+    const [userId, setUserId] = useState();
+    const [userName, setUserName] = useState();
+    const [peerUserId, setPeerUserId] = useState();
+    const [peerUserName, setPeerUserName] = useState();
+    const [login, setLogin] = useState(false);
+    const [users, setUsers] = useState([]);
 
-    const [outgoing, setOutgoing] = useState(false);
-    const [incoming, setIncoming] = useState(false);
-    const [socket, setSocket] = useState();
-    const [session, setSession] = useState();
-
-    const handleOutgoing = () => {
-        setOutgoing(true);
-        const data = {
-            type: 'outgoing',
-            action: 'ring',
-            to: peerUser,
-            toUserId: peerUserId,
-            origin: originUser,
-            originUserId: mineId,
-        };
-        socket.send(JSON.stringify(data));
-    };
-
-    const handleCallCancel = () => {
-        setOutgoing(false);
-        const data = {
-            type: 'outgoing',
-            action: 'cancel',
-            to: peerUser,
-            toUserId: peerUserId,
-            origin: originUser,
-            originUserId: mineId,
-        };
-        socket.send(JSON.stringify(data));
-        enqueueSnackbar('Cancel', {variant: 'warning', preventDuplicate: true});
-    };
-
-    const handleReject = () => {
-        setIncoming(false);
-        const data = {
-            type: 'incoming',
-            action: 'reject',
-            originUserId: peerUserId,
-        };
-        socket.send(JSON.stringify(data));
-        enqueueSnackbar('Rejected', {variant: 'warning', preventDuplicate: true});
-    };
-
-    const handleAnswer = () => {
-        setIncoming(false);
-        const data = {
-            type: 'incoming',
-            action: 'answer',
-            originUserId: peerUserId,
-        };
-        socket.send(JSON.stringify(data));
-        enqueueSnackbar('Connected', {variant: 'success', preventDuplicate: true});
-    };
-
-    const handleLeaveSession = () => {
-        setSession(undefined);
-        const data = {
-            type: 'incoming',
-            action: 'handoff',
-            peerUserId,
-        };
-        socket.send(JSON.stringify(data));
-        enqueueSnackbar('Disconnected', {variant: 'info', preventDuplicate: true});
+    const onSubmit = data => {
+        const {userId, userName} = data;
+        setUserId(userId);
+        setUserName(userName);
+        setLogin(true);
     };
 
     useEffect(() => {
-        // create control socket
-        const ws = new WebSocket('ws://localhost:5000/my-call');
-        ws.addEventListener('open', ev => {
-            console.log('WebSocket Open');
-            // register
-            const data = {
-                type: 'registration',
-                userId: mineId,
-            }
-            ws.send(JSON.stringify(data));
-        });
-        ws.addEventListener('ping', ev => {
-            console.log('ping');
-        });
-        ws.addEventListener('message', ev => {
-            console.log('message', ev.data);
-            const messageData = JSON.parse(ev.data);
-            const {type} = messageData;
-            if (type === 'incoming') {
-                const {action} = messageData;
-                if (action === 'ring') {
-                    setIncoming(true);
-                } else if (action === 'cancel') {
-                    setIncoming(false);
-                    enqueueSnackbar('Cancel', {variant: 'warning', preventDuplicate: true});
-                }
-            } else if (type === 'connect') {
-                setOutgoing(false);
-                const {session} = messageData;
-                setSession(session);
-                enqueueSnackbar('Connected', {variant: 'success', preventDuplicate: true});
-            } else if (type === 'disconnect') {
-                setSession(undefined);
-                enqueueSnackbar('Disconnected', {variant: 'info', preventDuplicate: true});
-            }
-        });
-        setSocket(ws);
-    }, []);
+        // 请求服务
+        if (login) {
+            axios.get('http://localhost:5000/dashboard/onlineUsers')
+                .then(res => {
+                    const {users} = res.data;
+                    setUsers(users);
+                })
+                .catch(err => {
+                    console.error(err);
+                });
+        } else {
+            setUsers([]);
+        }
+    }, [login]);
 
     return (
-        <div>
-            <Fab color="secondary" className={classes.fab} onClick={handleOutgoing}>
-                <Phone/>
-            </Fab>
-            <OutgoingComponent open={outgoing}
-                               callType="Video"
-                               handleCancel={handleCallCancel}/>
-            <IncomingComponent open={incoming}
-                               callType="Audio"
-                               handleAnswer={handleAnswer}
-                               handleReject={handleReject}
-            />
-            {
-                session && <VideoRoomComponent
-                    openviduServerUrl="https://192.168.8.181:4443"
-                    sessionName={session}
-                    user={originUser}
-                    leaveSession={handleLeaveSession}
-                    // joinSession={() => {
-                    //     setIncoming(false);
-                    //     setOutgoing(false);
-                    // }}
-                />
-            }
+        <div >
+            <form className={classes.root} onSubmit={handleSubmit(onSubmit)}>
+                <TextField label="User Id"
+                           disabled={login}
+                           {...register('userId', { required: true })}/>
+                {errors.userId && <p className={classes.error}>请输入UserId</p>}
+
+                <TextField label="User Name"
+                           disabled={login}
+                           {...register('userName', { required: true })}/>
+                {errors.userName && <p className={classes.error}>请输入UserName</p>}
+
+                <input type="submit" disabled={login}/>
+            </form>
+
+            <span style={{paddingLeft: '20px'}}>在线用户</span>
+            <List className={classes.list}>
+                {
+                    users.map(user => (
+                        <ListItem button={user.userId !== userId}
+                                  key={user.userId}
+                                  onClick={() => {
+                                      setPeerUserId(user.userId);
+                                      setPeerUserName(user.userName);
+                                  }}
+                        >
+                            <ListItemAvatar>
+                                <Avatar>
+                                    <AccountCircle color="primary"/>
+                                </Avatar>
+                            </ListItemAvatar>
+                            <ListItemText primary={user.userName}
+                                          secondary={
+                                              user.userId + (
+                                                  user.userId === userId ? "(Me)" : ""
+                                              )
+                                          }/>
+                        </ListItem>
+                    ))
+                }
+            </List>
+
+            <CallComponent userId={userId} userName={userName}
+                           peerUserId={peerUserId} peerUserName={peerUserName}/>
         </div>
     );
 };

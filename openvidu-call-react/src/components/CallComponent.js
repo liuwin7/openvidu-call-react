@@ -17,7 +17,7 @@ const useStyles = makeStyles(theme => ({
 /**
  * 电话类型
  * */
-class CallDirection {
+export class CallDirection {
     static Outgoing = 'outgoing';
     static Incoming = 'incoming';
 }
@@ -25,11 +25,10 @@ class CallDirection {
 /**
  * 电话状态
  * */
-class CallStatus {
+export class CallStatus {
     static Idle = 'idle';
     static Waiting = 'waiting';
     static Connected = 'connected';
-    static Disconnected = 'disconnected';
 }
 
 /**
@@ -45,13 +44,31 @@ class Call {
         this.peerUserName = peerUserName;
         this.status = CallStatus.Idle;
     }
+
+    get callParams() {
+        return {
+            direction: this.direction,
+            callId: this.callId,
+            originUserId: this.originUserId,
+            originUserName: this.originUserName,
+            peerUserId: this.peerUserId,
+            peerUserName: this.peerUserName,
+        };
+    }
+
+    updateStatusAndGen(status) {
+        return new Call(this.direction, this.callId,
+            this.originUserId, this.originUserName,
+            this.peerUserId, this.peerUserName,
+            status);
+    }
 }
 
 /**
  * OutgoingCall 拨出电话
  * */
 class OutgoingCall extends Call {
-    constructor(originUserId, originUserName, peerUserId, peerUserName) {
+    constructor({originUserId, originUserName, peerUserId, peerUserName}) {
         super(
             CallDirection.Outgoing, uuidV4(),
             originUserId, originUserName, peerUserId, peerUserName
@@ -63,9 +80,9 @@ class OutgoingCall extends Call {
  * IncomingCall 拨入电话
  * */
 class IncomingCall extends Call {
-    constructor(originUserId, originUserName, peerUserId, peerUserName) {
+    constructor({callId, originUserId, originUserName, peerUserId, peerUserName}) {
         super(
-            CallDirection.Incoming, uuidV4(),
+            CallDirection.Incoming, callId,
             originUserId, originUserName, peerUserId, peerUserName
         );
     }
@@ -101,80 +118,76 @@ class Actions {
 const CallComponent = ({userId, userName, peerUserId, peerUserName}) => {
 
     const classes = useStyles();
-    const [outgoing, setOutgoing] = useState(false);
-    const [incoming, setIncoming] = useState(false);
     const [socket, setSocket] = useState();
     const [session, setSession] = useState();
-    const [currentCall, setCurrentCall] = useState(); //
+    const [currentCall, setCurrentCall] = useState(); // call object
 
+    // 【呼叫方】发起呼叫
     const handleOutgoing = () => {
-        setOutgoing(true);
-        const call = {
-            peerUserName, peerUserId,
-            fromUserName: userName, fromUserId: userId,
-        };
+        const outgoingCall = new OutgoingCall({
+            originUserId: userId, originUserName: userName,
+            peerUserId, peerUserName
+        });
+        setCurrentCall(outgoingCall)
         const data = {
             type: Commands.Invite,
             action: Actions.Ring,
-            ...call,
+            ...outgoingCall.callParams,
         };
         socket.send(JSON.stringify(data));
+        setCurrentCall(outgoingCall.updateStatusAndGen(CallStatus.Waiting));
     };
 
+    // 【呼叫方】取消呼叫
     const handleCallCancel = () => {
-        setOutgoing(false);
         const data = {
-            type: Commands.Outgoing,
+            type: Commands.Invite,
             action: Actions.Cancel,
-            peerUserName, peerUserId,
-            fromUserName: userName,
-            fromUserId: userId,
+            ...currentCall.callParams,
         };
         socket.send(JSON.stringify(data));
+        setCurrentCall(undefined);
         // enqueueSnackbar('Cancel', {variant: 'warning', preventDuplicate: true});
     };
 
+    // 【被呼叫方】
     const handleReject = () => {
-        setIncoming(false);
         const data = {
-            type: Commands.Incoming,
+            type: Commands.Invite,
             action: Actions.Reject,
-            originUserId: peerUserId,
+            ...currentCall.callParams,
         };
         socket.send(JSON.stringify(data));
+        setCurrentCall(undefined);
         // enqueueSnackbar('Rejected', {variant: 'warning', preventDuplicate: true});
     };
 
     const handleAnswer = () => {
-        setIncoming(false);
+        console.log('currentCall', currentCall);
         const data = {
-            type: Commands.Incoming,
+            type: Commands.Invite,
             action: Actions.Answer,
-            originUserId: peerUserId,
+            ...(currentCall.callParams),
         };
         socket.send(JSON.stringify(data));
+        setCurrentCall(currentCall.updateStatusAndGen(CallStatus.Connected))
         // enqueueSnackbar('Connected', {variant: 'success', preventDuplicate: true});
     };
 
     const handleLeaveSession = () => {
         setSession(undefined);
         const data = {
-            type: Commands.Incoming,
+            type: Commands.Disconnect,
             action: Actions.Handoff,
-            peerUserId,
+            ...(currentCall.callParams),
         };
         socket.send(JSON.stringify(data));
+        setCurrentCall(undefined);
         // enqueueSnackbar('Disconnected', {variant: 'info', preventDuplicate: true});
     };
 
     const onopen = ev => {
         console.log('WebSocket Open', ev);
-        // registration or bind the user and the websocket
-        const data = {
-            type: Commands.Registration,
-            userId,
-        }
-        this.send(JSON.stringify(data));
     };
 
     const onerror = ev => {
@@ -188,29 +201,36 @@ const CallComponent = ({userId, userName, peerUserId, peerUserName}) => {
     const onmessage = ev => {
         console.log('message', ev.data);
         const messageData = JSON.parse(ev.data);
-        const {type} = messageData;
+        const {type, action, ...callParams} = messageData;
         if (type === Commands.Invite) {
             if (currentCall) {
-                // TODO - Tell the server, I'm busy.
                 socket.send(JSON.stringify({
-
+                    type: Commands.Invite,
+                    action: Actions.Busy,
+                    ...callParams,
                 }));
                 return;
             }
-            const {action} = messageData;
             if (action === Actions.Ring) {
-                setIncoming(true);
+                const incomingCall = new IncomingCall({
+                    ...callParams
+                });
+                setCurrentCall(incomingCall.updateStatusAndGen(CallStatus.Waiting));
             } else if (action === Actions.Cancel) {
-                setIncoming(false);
+                setCurrentCall(undefined);
                 // enqueueSnackbar('Cancel', {variant: 'warning', preventDuplicate: true});
+            } else if (action === Actions.Busy) {
+                setCurrentCall(undefined);
+                // enqueueSnackbar('Peer Busy', {variant: 'warning', preventDuplicate: true});
             }
         } else if (type === Commands.Connect) {
-            setOutgoing(false);
             const {session} = messageData;
             setSession(session);
+            setCurrentCall(currentCall.updateStatusAndGen(CallStatus.Connected));
             // enqueueSnackbar('Connected', {variant: 'success', preventDuplicate: true});
         } else if (type === Commands.Disconnect) {
             setSession(undefined);
+            setCurrentCall(undefined);
             // enqueueSnackbar('Disconnected', {variant: 'info', preventDuplicate: true});
         }
     };
@@ -226,23 +246,31 @@ const CallComponent = ({userId, userName, peerUserId, peerUserName}) => {
 
     useEffect(() => {
         // create control socket
-        if (socket) {
-            console.log('Socket has created');
-            return;
+        if (!socket) {
+            setSocket(createSocket());
         }
-        setSocket(createSocket());
-    }, []);
+        // registration or bind the user and the websocket
+        if (userId && userName) {
+            const data = {
+                type: Commands.Registration,
+                userId, userName,
+            }
+            socket.send(JSON.stringify(data));
+        }
+        // 呼叫
+        if (peerUserId && peerUserName && !currentCall) {
+            handleOutgoing();
+        }
+    }, [userId, userName, peerUserId, peerUserName]);
 
     return (
         <div>
             <Fab color="secondary" className={classes.fab} onClick={handleOutgoing}>
                 <Phone/>
             </Fab>
-            <OutgoingComponent open={outgoing}
-                               callType="Video"
+            <OutgoingComponent currentCall={currentCall}
                                handleCancel={handleCallCancel}/>
-            <IncomingComponent open={incoming}
-                               callType="Audio"
+            <IncomingComponent currentCall={currentCall}
                                handleAnswer={handleAnswer}
                                handleReject={handleReject}
             />

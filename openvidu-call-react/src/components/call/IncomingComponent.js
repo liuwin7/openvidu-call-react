@@ -2,6 +2,7 @@ import React from "react";
 import {AppBar, Dialog, IconButton, makeStyles, Slide, Toolbar, Typography} from "@material-ui/core";
 import {CallEnd, Phone} from "@material-ui/icons";
 import {green, red} from "@material-ui/core/colors";
+import {CallDirection, CallStatus} from "../CallComponent";
 
 const useStyles = makeStyles(theme => ({
     appBar: {
@@ -25,11 +26,14 @@ const Transition = React.forwardRef((props, ref) => (
     <Slide direction="up" ref={ref} {...props} />
 ));
 
-const IncomingComponent = ({callType = 'Video', open, handleAnswer, handleReject}) => {
+const IncomingComponent = ({currentCall, handleAnswer, handleReject}) => {
     const classes = useStyles();
-
+    const dialogOpen = !!currentCall
+        && currentCall.direction === CallDirection.Incoming
+        && currentCall.status !== CallStatus.Connected;
     return (
-        <Dialog open={open} fullScreen TransitionComponent={Transition}>
+        <Dialog open={dialogOpen}
+                fullScreen TransitionComponent={Transition}>
             <AppBar className={classes.appBar}>
                 <Toolbar>
                     <Typography variant="h6" className={classes.title}>
@@ -39,7 +43,7 @@ const IncomingComponent = ({callType = 'Video', open, handleAnswer, handleReject
             </AppBar>
             <div className={classes.content}>
                 <Typography variant="h6">
-                    {callType}  From 张三
+                    视频电话 { currentCall ? currentCall.originUserName : ''}
                 </Typography>
                 <div>
                     <IconButton color="secondary" aria-label="reject"
