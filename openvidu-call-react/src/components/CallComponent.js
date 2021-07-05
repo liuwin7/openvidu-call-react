@@ -1,18 +1,8 @@
-import {Fab, makeStyles} from "@material-ui/core";
-import {Phone} from "@material-ui/icons";
 import OutgoingComponent from "./call/OutgoingComponent";
 import IncomingComponent from "./call/IncomingComponent";
 import VideoRoomComponent from "./VideoRoomComponent";
 import React, {useEffect, useState} from "react";
 import { v4 as uuidV4 } from 'uuid';
-
-const useStyles = makeStyles(theme => ({
-    fab: {
-        position: "absolute",
-        right: theme.spacing(2),
-        bottom: theme.spacing(2),
-    }
-}));
 
 /**
  * 电话类型
@@ -117,7 +107,6 @@ class Actions {
 
 const CallComponent = ({userId, userName, peerUserId, peerUserName}) => {
 
-    const classes = useStyles();
     const [socket, setSocket] = useState();
     const [session, setSession] = useState();
     const [currentCall, setCurrentCall] = useState(); // call object
@@ -265,9 +254,6 @@ const CallComponent = ({userId, userName, peerUserId, peerUserName}) => {
 
     return (
         <div>
-            <Fab color="secondary" className={classes.fab} onClick={handleOutgoing}>
-                <Phone/>
-            </Fab>
             <OutgoingComponent currentCall={currentCall}
                                handleCancel={handleCallCancel}/>
             <IncomingComponent currentCall={currentCall}
