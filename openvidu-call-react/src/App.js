@@ -5,6 +5,7 @@ import {useSnackbar} from "notistack";
 import CallComponent from "./components/CallComponent";
 import {useForm} from "react-hook-form";
 import axios from "axios";
+import CallKit from "./components/CallKit";
 
 const useStyles = makeStyles(theme => ({
     fab: {
@@ -27,6 +28,8 @@ const useStyles = makeStyles(theme => ({
     },
 }));
 
+const call = new CallKit();
+
 const App = () => {
     const classes = useStyles();
     const {
@@ -45,6 +48,7 @@ const App = () => {
         const {userId, userName} = data;
         setUserId(userId);
         setUserName(userName);
+        call.init(userId, userName);
         setLogin(true);
     };
 
@@ -87,8 +91,7 @@ const App = () => {
                         <ListItem button={user.userId !== userId}
                                   key={user.userId}
                                   onClick={() => {
-                                      setPeerUserId(user.userId);
-                                      setPeerUserName(user.userName);
+                                      call.call(user.userId, user.userName);
                                   }}
                         >
                             <ListItemAvatar>
@@ -107,8 +110,14 @@ const App = () => {
                 }
             </List>
 
-            <CallComponent userId={userId} userName={userName}
-                           peerUserId={peerUserId} peerUserName={peerUserName}/>
+            <CallComponent callKit={call} userId={userId} userName={userName}
+                           onCancel={() => {
+                           }}
+                           onReject={() => {
+                           }} onConnected={() => console.log('connected')}
+                           onDisconnected={() => {
+                           }}
+                           />
         </div>
     );
 };

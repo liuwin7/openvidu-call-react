@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/../../openvidu-call/openvidu-call-back/.idea/openvidu-call-back.iml" filepath="$PROJECT_DIR$/../../openvidu-call/openvidu-call-back/.idea/openvidu-call-back.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/openvidu-call-react.iml" filepath="$PROJECT_DIR$/.idea/openvidu-call-react.iml" />
     </modules>
   </component>

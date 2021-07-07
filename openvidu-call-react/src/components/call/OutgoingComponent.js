@@ -9,7 +9,7 @@ import {
     Typography,
 } from "@material-ui/core";
 import {CallEnd} from '@material-ui/icons';
-import {CallDirection, CallStatus} from "../CallComponent";
+import {CallDirection, CallStatus} from "../CallKit";
 
 const useStyles = makeStyles(theme => ({
     appBar: {
@@ -37,7 +37,8 @@ const OutgoingComponent = ({currentCall, handleCancel}) => {
     const classes = useStyles();
     const dialogOpen = !!currentCall
         && currentCall.direction === CallDirection.Outgoing
-        && currentCall.status !== CallStatus.Connected;
+        && currentCall.status === CallStatus.Waiting;
+    console.log('OutgoingComponent', currentCall, dialogOpen);
     return (
         <div>
             <Dialog open={dialogOpen}

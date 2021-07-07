@@ -2,7 +2,7 @@ import React from "react";
 import {AppBar, Dialog, IconButton, makeStyles, Slide, Toolbar, Typography} from "@material-ui/core";
 import {CallEnd, Phone} from "@material-ui/icons";
 import {green, red} from "@material-ui/core/colors";
-import {CallDirection, CallStatus} from "../CallComponent";
+import {CallDirection, CallStatus} from "../CallKit";
 
 const useStyles = makeStyles(theme => ({
     appBar: {
@@ -30,7 +30,8 @@ const IncomingComponent = ({currentCall, handleAnswer, handleReject}) => {
     const classes = useStyles();
     const dialogOpen = !!currentCall
         && currentCall.direction === CallDirection.Incoming
-        && currentCall.status !== CallStatus.Connected;
+        && currentCall.status === CallStatus.Waiting;
+    console.log('IncomingComponent', currentCall, dialogOpen);
     return (
         <Dialog open={dialogOpen}
                 fullScreen TransitionComponent={Transition}>
