@@ -1,5 +1,13 @@
 import React, {useEffect, useState} from "react";
-import {Avatar, List, ListItem, ListItemAvatar, ListItemText, makeStyles, TextField} from "@material-ui/core";
+import {
+    Avatar, Button,
+    List,
+    ListItem,
+    ListItemAvatar,
+    ListItemText,
+    makeStyles,
+    TextField
+} from "@material-ui/core";
 import {AccountCircle} from "@material-ui/icons";
 import {useSnackbar} from "notistack";
 import CallComponent from "./components/CallComponent";
@@ -14,9 +22,10 @@ const useStyles = makeStyles(theme => ({
         bottom: theme.spacing(2),
     },
     root: {
+        margin: '0 auto',
         '& > *': {
-            margin: theme.spacing(1),
-            width: '25ch',
+            margin: theme.spacing(2),
+            width: '25em',
         },
     },
     list: {
@@ -39,8 +48,6 @@ const App = () => {
 
     const [userId, setUserId] = useState();
     const [userName, setUserName] = useState();
-    const [peerUserId, setPeerUserId] = useState();
-    const [peerUserName, setPeerUserName] = useState();
     const [login, setLogin] = useState(false);
     const [users, setUsers] = useState([]);
 
@@ -71,17 +78,32 @@ const App = () => {
     return (
         <div >
             <form className={classes.root} onSubmit={handleSubmit(onSubmit)}>
-                <TextField label="User Id"
-                           disabled={login}
-                           {...register('userId', { required: true })}/>
-                {errors.userId && <p className={classes.error}>请输入UserId</p>}
+                <div>
+                    <TextField label="User Id"
+                               disabled={login} fullWidth
+                               helperText={
+                                   errors.userId ? errors.userId.message : ''
+                               }
+                               {...register('userId', { required: true })}/>
+                </div>
+                <div>
+                    <TextField label="User Name"
+                               disabled={login} fullWidth
+                               helperText={
+                                   errors.userName ? errors.userName.message : ''
+                               }
+                               {...register('userName', { required: true })}/>
+                </div>
 
-                <TextField label="User Name"
-                           disabled={login}
-                           {...register('userName', { required: true })}/>
-                {errors.userName && <p className={classes.error}>请输入UserName</p>}
-
-                <input type="submit" disabled={login}/>
+                <div>
+                    <Button type="submit"
+                            disabled={login}
+                            variant="contained"
+                            color="primary"
+                            fullWidth>
+                        登录
+                    </Button>
+                </div>
             </form>
 
             <span style={{paddingLeft: '20px'}}>在线用户</span>
@@ -91,6 +113,7 @@ const App = () => {
                         <ListItem button={user.userId !== userId}
                                   key={user.userId}
                                   onClick={() => {
+                                      if (user.userId === userId) return;
                                       call.call(user.userId, user.userName);
                                   }}
                         >
@@ -112,10 +135,24 @@ const App = () => {
 
             <CallComponent callKit={call} userId={userId} userName={userName}
                            onCancel={() => {
+                               enqueueSnackbar('Cancel', {
+                                   variant: 'info',
+                               });
                            }}
                            onReject={() => {
-                           }} onConnected={() => console.log('connected')}
+                               enqueueSnackbar('Reject', {
+                                   variant: 'info',
+                               });
+                           }}
+                           onConnected={() => {
+                               enqueueSnackbar('Connected', {
+                                   variant: 'info',
+                               });
+                           }}
                            onDisconnected={() => {
+                               enqueueSnackbar('Disconnected', {
+                                   variant: 'info',
+                               });
                            }}
                            />
         </div>
