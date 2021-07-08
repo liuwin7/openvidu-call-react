@@ -7,7 +7,7 @@ import App from "./App";
 import {Route, Switch, BrowserRouter as Router} from "react-router-dom";
 
 ReactDOM.render(
-    <SnackbarProvider>
+    <SnackbarProvider preventDuplicate>
         <Router>
             <Switch>
                 <Route path="/">
