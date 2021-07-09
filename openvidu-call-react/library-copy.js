@@ -3,9 +3,7 @@ const fs = require('fs-extra');
 const libraryPath = '../library/src/lib/';
 
 async function copyFiles() {
-
   try {
-
     await fs.copy('./src/components/', libraryPath + 'components');
     await fs.copy('./src/layout/', libraryPath + 'layout');
     await fs.copy('./src/models/', libraryPath + 'models');
@@ -14,4 +12,6 @@ async function copyFiles() {
   }
 }
 
-copyFiles();
+copyFiles().then(() => {
+  console.log('Finished Copy');
+});
