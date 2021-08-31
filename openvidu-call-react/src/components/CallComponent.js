@@ -2,7 +2,7 @@ import OutgoingComponent from "./call/OutgoingComponent";
 import IncomingComponent from "./call/IncomingComponent";
 import VideoRoomComponent from "./VideoRoomComponent";
 import React, {Component} from "react";
-import {Actions, CallStatus, Commands, IncomingCall, OutgoingCall} from "./CallKit";
+import {Actions, CallStatus, IncomingCall, OutgoingCall} from "./CallKit";
 
 class CallComponent extends Component {
 
@@ -112,7 +112,8 @@ class CallComponent extends Component {
                 {
                     session && <VideoRoomComponent
                         // openviduServerUrl="https://192.168.8.181:4443"
-                        openviduServerUrl="https://localhost:4443"
+                        // openviduServerUrl="https://localhost:4443"
+                        openviduServerUrl={this.callKit.openviduURL}
                         sessionName={session}
                         user={userName}
                         leaveSession={() => {

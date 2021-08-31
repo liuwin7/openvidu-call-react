@@ -104,8 +104,10 @@ export class Actions {
 }
 
 export default class CallKit {
-    constructor() {
-        this.websocket = new WebSocket('ws://localhost:5000/my-call');
+    constructor(wsURL, openviduURL) {
+        this.wsURL = wsURL;
+        this.openviduURL = openviduURL;
+        this.websocket = new WebSocket(wsURL);
         this.websocket.onmessage = ev => {
             const messageData = JSON.parse(ev.data);
             const {type, action, ...callParams} = messageData;

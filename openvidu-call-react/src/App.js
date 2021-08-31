@@ -37,7 +37,8 @@ const useStyles = makeStyles(theme => ({
     },
 }));
 
-const call = new CallKit();
+const call = new CallKit('ws://localhost:5000/my-call',
+    'https://localhost:4443');
 
 const App = () => {
     const classes = useStyles();
