@@ -63,7 +63,7 @@ const App = () => {
     useEffect(() => {
         // 请求服务
         if (login) {
-            axios.get('https://uniplay.boyfu.xyz:40003/dashboard/onlineUsers')
+            axios.get('https://uniplay.boyfu.xyz:24443/dashboard/onlineUsers')
                 .then(res => {
                     const {users} = res.data;
                     setUsers(users);
