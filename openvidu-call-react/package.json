@@ -11,7 +11,7 @@
         "axios": "0.19.2",
         "jquery": "3.5.0",
         "notistack": "^1.0.9",
-        "openvidu-browser": "2.18.0",
+        "openvidu-browser": "2.20.0",
         "react": "16.13.1",
         "react-dom": "16.13.1",
         "react-hook-form": "^7.9.0",
@@ -28,7 +28,7 @@
         "start": "react-scripts start",
         "test": "react-scripts test --env=jsdom"
     },
-    "version": "2.18.0",
+    "version": "2.20.0",
     "devDependencies": {
         "fs-extra": "^8.1.0"
     }
