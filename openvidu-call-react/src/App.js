@@ -63,7 +63,7 @@ const App = () => {
     useEffect(() => {
         // 请求服务
         if (login) {
-            axios.get('http://localhost:5000/dashboard/onlineUsers')
+            axios.get('https://localhost:40002/dashboard/onlineUsers')
                 .then(res => {
                     const {users} = res.data;
                     setUsers(users);
