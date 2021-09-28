@@ -104,11 +104,12 @@ export class Actions {
 }
 
 export default class CallKit {
-    constructor(wsURL, openviduURL) {
+    constructor(wsURL, openviduURL, openviduSecret) {
         this.wsURL = wsURL;
         this.openviduURL = openviduURL;
-        this.websocket = new WebSocket(wsURL);
-        this.websocket.onmessage = ev => {
+        this.openviduSecret = openviduSecret;
+        const ws = new WebSocket(wsURL);
+        ws.onmessage = ev => {
             const messageData = JSON.parse(ev.data);
             const {type, action, ...callParams} = messageData;
             const {_onInvite, _onConnect, _onDisconnect} = this;
@@ -127,15 +128,25 @@ export default class CallKit {
                 }
             }
         };
+        ws.onerror = (ev) => {
+            this.websocket = undefined;
+        };
+        ws.onopen = ev => {
+            this.websocket = ws;
+        }
     }
 
     init = (userId, userName) => {
+        if (!this.websocket) {
+            return false;
+        }
         this.userId = userId;
         this.userName = userName;
         this.websocket.send(JSON.stringify({
             type: Commands.Registration,
             userId, userName,
         }));
+        return true;
     }
 
     call = (peerUserId, peerUserName) => {

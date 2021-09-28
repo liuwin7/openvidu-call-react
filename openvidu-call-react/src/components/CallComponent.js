@@ -114,6 +114,7 @@ class CallComponent extends Component {
                         // openviduServerUrl="https://192.168.8.181:4443"
                         // openviduServerUrl="https://localhost:4443"
                         openviduServerUrl={this.callKit.openviduURL}
+                        openviduSecret={this.callKit.openviduSecret}
                         sessionName={session}
                         user={userName}
                         leaveSession={() => {
