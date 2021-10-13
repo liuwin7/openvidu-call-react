@@ -67,7 +67,7 @@ class UserModel {
         this.nickname = nickname;
     }
     setType(type) {
-        if (type === 'local' |  type === 'remote') {
+        if (type === 'local' ||  type === 'remote') {
             this.type = type;
         }
     }

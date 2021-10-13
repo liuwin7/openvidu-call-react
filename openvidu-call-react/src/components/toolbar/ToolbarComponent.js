@@ -82,38 +82,57 @@ export default class ToolbarComponent extends Component {
                         </div>}
                     </div>
 
+                    {/*tool buttons*/}
                     <div className="buttonsContent">
+                        {/*microphone button*/}
                         <IconButton color="inherit" className="navButton" id="navMicButton" onClick={this.micStatusChanged}>
-                            {localUser !== undefined && localUser.isAudioActive() ? <Mic /> : <MicOff color="secondary" />}
+                            {
+                                localUser !== undefined && localUser.isAudioActive()
+                                    ? <Mic />
+                                    : <MicOff color="secondary" />
+                            }
                         </IconButton>
-
+                        {/*video button*/}
                         <IconButton color="inherit" className="navButton" id="navCamButton" onClick={this.camStatusChanged}>
-                            {localUser !== undefined && localUser.isVideoActive() ? (
-                                <Videocam />
-                            ) : (
-                                <VideocamOff color="secondary" />
-                            )}
+                            {
+                                localUser !== undefined && localUser.isVideoActive()
+                                    ? <Videocam />
+                                    : <VideocamOff color="secondary" />
+                            }
                         </IconButton>
-
+                        {/*screen share button*/}
                         <IconButton color="inherit" className="navButton" onClick={this.screenShare}>
-                            {localUser !== undefined && localUser.isScreenShareActive() ? <PictureInPicture /> : <ScreenShare />}
+                            {
+                                localUser !== undefined && localUser.isScreenShareActive()
+                                    ? <PictureInPicture />
+                                    : <ScreenShare />
+                            }
                         </IconButton>
-
-                        {localUser !== undefined &&
-                            localUser.isScreenShareActive() && (
+                        {/*stop screen share button*/}
+                        {
+                            localUser !== undefined && localUser.isScreenShareActive() && (
                                 <IconButton onClick={this.stopScreenShare} id="navScreenButton">
                                     <StopScreenShare color="secondary" />
                                 </IconButton>
-                            )}
-
+                            )
+                        }
+                        {/*full screen button*/}
                         <IconButton color="inherit" className="navButton" onClick={this.toggleFullscreen}>
-                            {localUser !== undefined && this.state.fullscreen ? <FullscreenExit /> : <Fullscreen />}
+                            {
+                                localUser !== undefined && this.state.fullscreen
+                                    ? <FullscreenExit />
+                                    : <Fullscreen />
+                            }
                         </IconButton>
+                        {/*exit session button*/}
                         <IconButton color="secondary" className="navButton" onClick={this.leaveSession} id="navLeaveButton">
                             <PowerSettingsNew />
                         </IconButton>
-                         <IconButton color="inherit" onClick={this.toggleChat} id="navChatButton">
-                            {this.props.showNotification && <div id="point" className="" />}
+                        {/*chat button*/}
+                        <IconButton color="inherit" onClick={this.toggleChat} id="navChatButton">
+                            {
+                                this.props.showNotification && <div id="point" className="" />
+                            }
                             <Tooltip title="Chat">
                                 <QuestionAnswer />
                             </Tooltip>

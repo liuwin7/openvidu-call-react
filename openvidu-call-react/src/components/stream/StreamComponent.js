@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import './StreamComponent.css';
 import OvVideoComponent from './OvVideo';
 
@@ -16,7 +16,7 @@ import FormHelperText from '@material-ui/core/FormHelperText';
 export default class StreamComponent extends Component {
     constructor(props) {
         super(props);
-        this.state = { nickname: this.props.user.getNickname(), showForm: false, mutedSound: false, isFormValid: true };
+        this.state = {nickname: this.props.user.getNickname(), showForm: false, mutedSound: false, isFormValid: true};
         this.handleChange = this.handleChange.bind(this);
         this.handlePressKey = this.handlePressKey.bind(this);
         this.toggleNicknameForm = this.toggleNicknameForm.bind(this);
@@ -24,18 +24,18 @@ export default class StreamComponent extends Component {
     }
 
     handleChange(event) {
-        this.setState({ nickname: event.target.value });
+        this.setState({nickname: event.target.value});
         event.preventDefault();
     }
 
     toggleNicknameForm() {
         if (this.props.user.isLocal()) {
-            this.setState({ showForm: !this.state.showForm });
+            this.setState({showForm: !this.state.showForm});
         }
     }
 
     toggleSound() {
-        this.setState({ mutedSound: !this.state.mutedSound });
+        this.setState({mutedSound: !this.state.mutedSound});
     }
 
     handlePressKey(event) {
@@ -44,9 +44,9 @@ export default class StreamComponent extends Component {
             if (this.state.nickname.length >= 3 && this.state.nickname.length <= 20) {
                 this.props.handleNickname(this.state.nickname);
                 this.toggleNicknameForm();
-                this.setState({ isFormValid: true });
+                this.setState({isFormValid: true});
             } else {
-                this.setState({ isFormValid: false });
+                this.setState({isFormValid: false});
             }
         }
     }
@@ -58,7 +58,7 @@ export default class StreamComponent extends Component {
                     {this.state.showForm ? (
                         <FormControl id="nicknameForm">
                             <IconButton color="inherit" id="closeButton" onClick={this.toggleNicknameForm}>
-                                <HighlightOff />
+                                <HighlightOff/>
                             </IconButton>
                             <InputLabel htmlFor="name-simple" id="label">
                                 Nickname
@@ -88,24 +88,24 @@ export default class StreamComponent extends Component {
 
                 {this.props.user !== undefined && this.props.user.getStreamManager() !== undefined ? (
                     <div className="streamComponent">
-                        <OvVideoComponent user={this.props.user} mutedSound={this.state.mutedSound} />
+                        <OvVideoComponent user={this.props.user} mutedSound={this.state.mutedSound}/>
                         <div id="statusIcons">
                             {!this.props.user.isVideoActive() ? (
                                 <div id="camIcon">
-                                    <VideocamOff id="statusCam" />
+                                    <VideocamOff id="statusCam"/>
                                 </div>
                             ) : null}
 
                             {!this.props.user.isAudioActive() ? (
                                 <div id="micIcon">
-                                    <MicOff id="statusMic" />
+                                    <MicOff id="statusMic"/>
                                 </div>
                             ) : null}
                         </div>
                         <div>
                             {!this.props.user.isLocal() && (
                                 <IconButton id="volumeButton" onClick={this.toggleSound}>
-                                    {this.state.mutedSound ? <VolumeOff color="secondary" /> : <VolumeUp />}
+                                    {this.state.mutedSound ? <VolumeOff color="secondary"/> : <VolumeUp/>}
                                 </IconButton>
                             )}
                         </div>
