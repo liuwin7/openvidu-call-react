@@ -104,10 +104,9 @@ export class Actions {
 }
 
 export default class CallKit {
-    constructor(wsURL, openviduURL, openviduSecret) {
+    constructor(wsURL, backendServerUrl) {
         this.wsURL = wsURL;
-        this.openviduURL = openviduURL;
-        this.openviduSecret = openviduSecret;
+        this.backendServerUrl = backendServerUrl;
         const ws = new WebSocket(wsURL);
         ws.onmessage = ev => {
             const messageData = JSON.parse(ev.data);

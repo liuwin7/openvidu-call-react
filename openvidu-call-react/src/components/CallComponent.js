@@ -111,10 +111,7 @@ class CallComponent extends Component {
                 />
                 {
                     session && <VideoRoomComponent
-                        // openviduServerUrl="https://192.168.8.181:4443"
-                        // openviduServerUrl="https://localhost:4443"
-                        openviduServerUrl={this.callKit.openviduURL}
-                        openviduSecret={this.callKit.openviduSecret}
+                        backendServerUrl={this.callKit.backendServerUrl}
                         sessionName={session}
                         user={userName}
                         leaveSession={() => {

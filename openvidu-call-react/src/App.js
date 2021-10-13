@@ -38,7 +38,7 @@ const useStyles = makeStyles(theme => ({
 }));
 
 const call = new CallKit('wss://uniplay.boyfu.xyz:40002/my-call',
-    'https://uniplay.boyfu.xyz:40001', 'openvidu');
+    'https://uniplay.boyfu.xyz:40002/call');
 
 const App = () => {
     const classes = useStyles();
