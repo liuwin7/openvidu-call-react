@@ -497,10 +497,9 @@ class VideoRoomComponent extends Component {
     }
 
     getToken() {
-        const data = JSON.stringify({
+        return axios.post(this.OPENVIDU_BACKEND_SERVER_URL, {
             sessionId: this.state.mySessionId,
-        });
-        return axios.post(this.OPENVIDU_BACKEND_SERVER_URL, data);
+        }).then((res) => res.data);
     }
 }
 export default VideoRoomComponent;
